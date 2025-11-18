@@ -15,7 +15,16 @@ export const api = {
       body: JSON.stringify(data),
     }).then(r => r.json()),
 
-  getProducts: () => fetch(`${BASE_URL}/products`).then(r => r.json()),
+  getProducts: () => 
+    fetch(`${BASE_URL}/products`)
+      .then(r => {
+        if (!r.ok) throw new Error(`HTTP ${r.status}: ${r.statusText}`);
+        return r.json();
+      })
+      .catch(error => {
+        console.error("API Error:", error);
+        throw error;
+      }),
 
   getProduct: (id: string) =>
     fetch(`${BASE_URL}/products/${id}`).then(r => r.json()),

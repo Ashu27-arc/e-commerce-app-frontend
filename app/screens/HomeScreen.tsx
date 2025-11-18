@@ -1,11 +1,13 @@
 import { useEffect, useState, useRef } from "react";
-import { View, FlatList, StyleSheet, ScrollView, TouchableOpacity, Text, TextInput, Dimensions } from "react-native";
+import { View, FlatList, StyleSheet, ScrollView, TouchableOpacity, Text, TextInput, Dimensions, Alert, Modal } from "react-native";
 import ProductCard from "../../components/ProductCard";
 import Header from "../../components/Header";
 import { api } from "../../utils/api";
 import { router } from "expo-router";
 import { colors, spacing, borderRadius } from "../../utils/theme";
 import { Ionicons } from "@expo/vector-icons";
+import { useCart } from "../../utils/cartContext";
+import ProductsInfo, { type FilterOptions } from "./ProductsInfo";
 
 interface Product {
     _id: string;
@@ -37,18 +39,46 @@ export default function HomeScreen() {
     const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
     const [searchQuery, setSearchQuery] = useState("");
     const [activeBanner, setActiveBanner] = useState(0);
+    const [showFilters, setShowFilters] = useState(false);
+    const [filters, setFilters] = useState<FilterOptions>({ priceRange: [0, 200] });
+    const [loading, setLoading] = useState(true);
     const scrollViewRef = useRef<ScrollView>(null);
+    const { addToCart } = useCart();
 
     useEffect(() => {
-        api.getProducts().then((data) => {
-            setProducts(data);
-            setFilteredProducts(data);
-        });
+        console.log("Fetching products...");
+        setLoading(true);
+        api.getProducts()
+            .then((data) => {
+                console.log("Products received:", data);
+                console.log("Is array?", Array.isArray(data));
+                console.log("Data length:", data?.length);
+                
+                if (Array.isArray(data)) {
+                    setProducts(data);
+                    setFilteredProducts(data);
+                    console.log("Products set successfully:", data.length);
+                } else {
+                    console.error("Data is not an array:", data);
+                    Alert.alert("Error", "Invalid data format received from server");
+                }
+            })
+            .catch((error) => {
+                console.error("Error fetching products:", error);
+                console.error("Error details:", error.message);
+                Alert.alert(
+                    "Connection Error", 
+                    `Failed to load products: ${error.message}\n\nMake sure the backend is running on http://192.168.1.14:6000`
+                );
+            })
+            .finally(() => {
+                setLoading(false);
+            });
     }, []);
 
     useEffect(() => {
         filterProducts();
-    }, [searchQuery, products]);
+    }, [searchQuery, products, filters]);
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -73,7 +103,18 @@ export default function HomeScreen() {
             );
         }
 
+        // Apply price filter
+        if (filters.priceRange) {
+            filtered = filtered.filter(p =>
+                p.price >= filters.priceRange[0] && p.price <= filters.priceRange[1]
+            );
+        }
+
         setFilteredProducts(filtered);
+    };
+
+    const handleApplyFilters = (newFilters: FilterOptions) => {
+        setFilters(newFilters);
     };
 
     const handleCategoryPress = (categoryName: string) => {
@@ -84,9 +125,19 @@ export default function HomeScreen() {
         // Filter by category or navigate to category screen
     };
 
+    const handleAddToCart = (product: Product) => {
+        addToCart(product);
+        Alert.alert("Success", `${product.name} added to cart!`);
+    };
+
+    const handleAddToWishlist = (product: Product) => {
+        // Implement wishlist functionality here
+        Alert.alert("Wishlist", `${product.name} added to wishlist!`);
+    };
+
     return (
         <View style={styles.container}>
-            <Header title="Tech Store" />
+            <Header title="Electro Store" />
 
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Search Bar */}
@@ -99,8 +150,8 @@ export default function HomeScreen() {
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                         />
-                        <TouchableOpacity>
-                            <Ionicons name="camera-outline" size={20} color={colors.text} />
+                        <TouchableOpacity onPress={() => setShowFilters(true)}>
+                            <Ionicons name="options-outline" size={20} color={colors.text} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -178,25 +229,56 @@ export default function HomeScreen() {
                         </TouchableOpacity>
                     </View>
 
-                    <FlatList
-                        data={filteredProducts.slice(0, 6)}
-                        keyExtractor={item => item._id}
-                        horizontal
-                        showsHorizontalScrollIndicator={false}
-                        contentContainerStyle={styles.productsHorizontal}
-                        renderItem={({ item }) => (
-                            <View style={styles.productCardWrapper}>
-                                <ProductCard
-                                    item={item}
-                                    onPress={() =>
-                                        router.push(`/screens/ProductDetailsScreen?id=${item._id}`)
-                                    }
-                                />
-                            </View>
-                        )}
-                    />
+                    {loading ? (
+                        <View style={styles.loadingContainer}>
+                            <Text style={styles.loadingText}>Loading products...</Text>
+                        </View>
+                    ) : filteredProducts.length === 0 ? (
+                        <View style={styles.emptyContainer}>
+                            <Ionicons name="cube-outline" size={48} color="#CCC" />
+                            <Text style={styles.emptyText}>No products found</Text>
+                            <Text style={styles.emptySubtext}>
+                                {products.length === 0 
+                                    ? "Check your backend connection" 
+                                    : "Try adjusting your filters"}
+                            </Text>
+                        </View>
+                    ) : (
+                        <FlatList
+                            data={filteredProducts.slice(0, 6)}
+                            keyExtractor={item => item._id}
+                            horizontal
+                            showsHorizontalScrollIndicator={false}
+                            contentContainerStyle={styles.productsHorizontal}
+                            renderItem={({ item }) => (
+                                <View style={styles.productCardWrapper}>
+                                    <ProductCard
+                                        item={item}
+                                        onPress={() =>
+                                            router.push(`/screens/ProductDetailsScreen?id=${item._id}`)
+                                        }
+                                        onAddToCart={handleAddToCart}
+                                        onAddToWishlist={handleAddToWishlist}
+                                    />
+                                </View>
+                            )}
+                        />
+                    )}
                 </View>
             </ScrollView>
+
+            {/* Filter Modal */}
+            <Modal
+                visible={showFilters}
+                animationType="slide"
+                presentationStyle="pageSheet"
+                onRequestClose={() => setShowFilters(false)}
+            >
+                <ProductsInfo 
+                    onClose={() => setShowFilters(false)} 
+                    onApplyFilters={handleApplyFilters}
+                />
+            </Modal>
         </View>
     );
 }
@@ -323,5 +405,31 @@ const styles = StyleSheet.create({
     productCardWrapper: {
         width: 160,
         marginRight: spacing.md,
+    },
+    loadingContainer: {
+        padding: spacing.xl,
+        alignItems: "center",
+        justifyContent: "center",
+    },
+    loadingText: {
+        fontSize: 16,
+        color: "#666",
+    },
+    emptyContainer: {
+        padding: spacing.xl,
+        alignItems: "center",
+        justifyContent: "center",
+        gap: spacing.sm,
+    },
+    emptyText: {
+        fontSize: 18,
+        fontWeight: "600",
+        color: colors.text,
+        marginTop: spacing.sm,
+    },
+    emptySubtext: {
+        fontSize: 14,
+        color: "#666",
+        textAlign: "center",
     },
 });
