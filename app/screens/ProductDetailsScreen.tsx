@@ -7,6 +7,7 @@ import { useCart } from "../../utils/cartContext";
 import { useWishlist } from "../../utils/wishlistContext";
 import { colors, spacing, borderRadius } from "../../utils/theme";
 import { Ionicons } from "@expo/vector-icons";
+import ProductsInfo, { FilterOptions } from "./ProductsInfo";
 
 const categories = [
   { id: "all", label: "All" },
@@ -30,6 +31,8 @@ export default function ProductDetailsScreen() {
   const [sortModalVisible, setSortModalVisible] = useState(false);
   const [selectedSort, setSelectedSort] = useState("relevance");
   const [tempSort, setTempSort] = useState("relevance");
+  const [filterModalVisible, setFilterModalVisible] = useState(false);
+  const [appliedFilters, setAppliedFilters] = useState<FilterOptions | null>(null);
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
@@ -66,7 +69,42 @@ export default function ProductDetailsScreen() {
         return productCategory === selectedCat || productCategory?.includes(selectedCat);
       });
 
-  const sortedProducts = sortProducts(filteredProducts);
+  // Apply additional filters from ProductsInfo
+  const filterByAdvancedFilters = (products: any[]) => {
+    // If no filters applied, return all products
+    if (!appliedFilters) {
+      return products;
+    }
+
+    return products.filter(product => {
+      // Price filter
+      if (appliedFilters.priceRange) {
+        const [min, max] = appliedFilters.priceRange;
+        if (product.price < min || product.price > max) {
+          return false;
+        }
+      }
+      
+      // Color filter (if product has color property)
+      if (appliedFilters.color && product.color) {
+        if (product.color.toLowerCase() !== appliedFilters.color.toLowerCase()) {
+          return false;
+        }
+      }
+      
+      // Rating filter (if product has rating property)
+      if (appliedFilters.rating && product.rating) {
+        if (product.rating < appliedFilters.rating) {
+          return false;
+        }
+      }
+      
+      return true;
+    });
+  };
+
+  const advancedFilteredProducts = filterByAdvancedFilters(filteredProducts);
+  const sortedProducts = sortProducts(advancedFilteredProducts);
 
   const handleAddToCart = (product: any) => {
     addToCart(product);
@@ -123,7 +161,10 @@ export default function ProductDetailsScreen() {
 
       {/* Filter and Sort Bar */}
       <View style={styles.filterBar}>
-        <TouchableOpacity style={styles.filterButton}>
+        <TouchableOpacity 
+          style={styles.filterButton}
+          onPress={() => setFilterModalVisible(true)}
+        >
           <Text style={styles.filterIcon}>☰</Text>
           <Text style={styles.filterText}>All filters</Text>
         </TouchableOpacity>
@@ -241,6 +282,21 @@ export default function ProductDetailsScreen() {
             </TouchableOpacity>
           </View>
         </TouchableOpacity>
+      </Modal>
+
+      {/* Filter Modal */}
+      <Modal
+        visible={filterModalVisible}
+        animationType="slide"
+        onRequestClose={() => setFilterModalVisible(false)}
+      >
+        <ProductsInfo
+          onClose={() => setFilterModalVisible(false)}
+          onApplyFilters={(filters) => {
+            setAppliedFilters(filters);
+            setFilterModalVisible(false);
+          }}
+        />
       </Modal>
     </View>
   );

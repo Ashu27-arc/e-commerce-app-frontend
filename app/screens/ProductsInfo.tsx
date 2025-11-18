@@ -108,7 +108,7 @@ const ProductsInfo = ({ onClose, onApplyFilters }: ProductsInfoProps) => {
           <View style={styles.sectionHeader}>
             <Text style={styles.sectionTitle}>Price range</Text>
             <View style={styles.priceRangeHeader}>
-              <Text style={styles.priceRangeText}>${priceRange[0]}-{priceRange[1]}</Text>
+              <Text style={styles.priceRangeText}>₹{priceRange[0]}-{priceRange[1]}</Text>
               <Ionicons name="chevron-up" size={20} color="#000" />
             </View>
           </View>
@@ -124,8 +124,8 @@ const ProductsInfo = ({ onClose, onApplyFilters }: ProductsInfoProps) => {
               thumbTintColor="#FF8C00"
             />
             <View style={styles.priceLabels}>
-              <Text style={styles.priceLabel}>${priceRange[0]}</Text>
-              <Text style={styles.priceLabel}>${priceRange[1]}</Text>
+              <Text style={styles.priceLabel}>₹{priceRange[0]}</Text>
+              <Text style={styles.priceLabel}>₹{priceRange[1]}</Text>
             </View>
           </View>
         </View>
