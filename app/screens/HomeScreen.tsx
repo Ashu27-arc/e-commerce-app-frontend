@@ -2,12 +2,12 @@ import { useEffect, useState, useRef } from "react";
 import { View, FlatList, StyleSheet, ScrollView, TouchableOpacity, Text, TextInput, Dimensions, Alert, Modal } from "react-native";
 import ProductCard from "../../components/ProductCard";
 import Header from "../../components/Header";
-import { api } from "../../utils/api";
 import { router } from "expo-router";
 import { colors, spacing, borderRadius } from "../../utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useCart } from "../../utils/cartContext";
 import ProductsInfo, { type FilterOptions } from "./ProductsInfo";
+import { api } from "../../utils/api";
 
 interface Product {
     _id: string;
@@ -17,19 +17,29 @@ interface Product {
     category?: string;
 }
 
+// Mock electronics and accessories products data
+const mockProducts: Product[] = [
+    { _id: "1", name: "Wireless Headphones", price: 199, category: "Audio", image: "https://via.placeholder.com/150" },
+    { _id: "2", name: "Smart Watch", price: 299, category: "Wearables", image: "https://via.placeholder.com/150" },
+    { _id: "3", name: "Laptop Stand", price: 49, category: "Accessories", image: "https://via.placeholder.com/150" },
+    { _id: "4", name: "Mechanical Keyboard", price: 129, category: "Accessories", image: "https://via.placeholder.com/150" },
+    { _id: "5", name: "Portable Charger", price: 39, category: "Accessories", image: "https://via.placeholder.com/150" },
+    { _id: "6", name: "Bluetooth Speaker", price: 89, category: "Audio", image: "https://via.placeholder.com/150" },
+];
+
 const categories = [
-    { name: "Phones", icon: "phone-portrait-outline" },
-    { name: "Laptops", icon: "laptop-outline" },
-    { name: "Tablets", icon: "tablet-portrait-outline" },
-    { name: "Headphones", icon: "headset-outline" },
-    { name: "Watches", icon: "watch-outline" },
-    { name: "Accessories", icon: "bag-handle-outline" },
+    { name: "Audio", icon: "headset-outline" },
+    { name: "Wearables", icon: "watch-outline" },
+    { name: "Accessories", icon: "phone-portrait-outline" },
+    { name: "Cameras", icon: "camera-outline" },
+    { name: "Gaming", icon: "game-controller-outline" },
+    { name: "More...", icon: "ellipsis-horizontal" },
 ];
 
 const banners = [
-    { id: 1, title: "Latest Electronics!", subtitle: "Up to 30% off on smartphones and laptops", color: "#FFE4CC" },
-    { id: 2, title: "New Accessories!", subtitle: "Check out our latest tech accessories collection", color: "#E4F0FF" },
-    { id: 3, title: "Summer Sale!", subtitle: "Huge discounts on all electronics", color: "#FFE4E4" },
+    { id: 1, title: "Audio Deals!", subtitle: "Up to 40% off on premium headphones and speakers", color: "#FFE4CC" },
+    { id: 2, title: "New Arrivals!", subtitle: "Check out the latest tech gadgets and accessories", color: "#E4F0FF" },
+    { id: 3, title: "Tech Sale!", subtitle: "Huge discounts on all electronics and accessories", color: "#FFE4E4" },
 ];
 
 const { width } = Dimensions.get("window");
@@ -40,45 +50,32 @@ export default function HomeScreen() {
     const [searchQuery, setSearchQuery] = useState("");
     const [activeBanner, setActiveBanner] = useState(0);
     const [showFilters, setShowFilters] = useState(false);
-    const [filters, setFilters] = useState<FilterOptions>({ priceRange: [0, 200] });
+    const [filters, setFilters] = useState<FilterOptions>({ priceRange: [0, 2000] });
     const [loading, setLoading] = useState(true);
     const scrollViewRef = useRef<ScrollView>(null);
     const { addToCart } = useCart();
 
     useEffect(() => {
-        console.log("Fetching products...");
-        setLoading(true);
-        api.getProducts()
-            .then((data) => {
-                console.log("Products received:", data);
-                console.log("Is array?", Array.isArray(data));
-                console.log("Data length:", data?.length);
-                
-                if (Array.isArray(data)) {
-                    setProducts(data);
-                    setFilteredProducts(data);
-                    console.log("Products set successfully:", data.length);
-                } else {
-                    console.error("Data is not an array:", data);
-                    Alert.alert("Error", "Invalid data format received from server");
-                }
-            })
-            .catch((error) => {
-                console.error("Error fetching products:", error);
-                console.error("Error details:", error.message);
-                Alert.alert(
-                    "Connection Error", 
-                    `Failed to load products: ${error.message}\n\nMake sure the backend is running on http://192.168.1.14:6000`
-                );
-            })
-            .finally(() => {
-                setLoading(false);
-            });
+        fetchProducts();
     }, []);
 
     useEffect(() => {
         filterProducts();
     }, [searchQuery, products, filters]);
+
+    const fetchProducts = async () => {
+        try {
+            setLoading(true);
+            const data = await api.getProducts();
+            setProducts(data);
+            setFilteredProducts(data);
+        } catch (error) {
+            console.error("Error fetching products:", error);
+            Alert.alert("Error", "Failed to load products. Please try again.");
+        } finally {
+            setLoading(false);
+        }
+    };
 
     useEffect(() => {
         const interval = setInterval(() => {
@@ -137,21 +134,21 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.container}>
-            <Header title="Electro Store" />
+            <Header title="Tech Store" />
 
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Search Bar */}
                 <View style={styles.searchContainer}>
                     <View style={styles.searchBar}>
-                        <Ionicons name="search" size={20} color={colors.text} />
+                        <Ionicons name="search" size={24} color={colors.text} />
                         <TextInput
                             style={styles.searchInput}
                             placeholder="Search products"
                             value={searchQuery}
                             onChangeText={setSearchQuery}
                         />
-                        <TouchableOpacity onPress={() => setShowFilters(true)}>
-                            <Ionicons name="options-outline" size={20} color={colors.text} />
+                        <TouchableOpacity>
+                            <Ionicons name="camera-outline" size={24} color={colors.text} />
                         </TouchableOpacity>
                     </View>
                 </View>
@@ -234,18 +231,12 @@ export default function HomeScreen() {
                             <Text style={styles.loadingText}>Loading products...</Text>
                         </View>
                     ) : filteredProducts.length === 0 ? (
-                        <View style={styles.emptyContainer}>
-                            <Ionicons name="cube-outline" size={48} color="#CCC" />
-                            <Text style={styles.emptyText}>No products found</Text>
-                            <Text style={styles.emptySubtext}>
-                                {products.length === 0 
-                                    ? "Check your backend connection" 
-                                    : "Try adjusting your filters"}
-                            </Text>
+                        <View style={styles.loadingContainer}>
+                            <Text style={styles.loadingText}>No products available</Text>
                         </View>
                     ) : (
                         <FlatList
-                            data={filteredProducts.slice(0, 6)}
+                            data={filteredProducts.slice(0, 3)}
                             keyExtractor={item => item._id}
                             horizontal
                             showsHorizontalScrollIndicator={false}
@@ -274,8 +265,8 @@ export default function HomeScreen() {
                 presentationStyle="pageSheet"
                 onRequestClose={() => setShowFilters(false)}
             >
-                <ProductsInfo 
-                    onClose={() => setShowFilters(false)} 
+                <ProductsInfo
+                    onClose={() => setShowFilters(false)}
                     onApplyFilters={handleApplyFilters}
                 />
             </Modal>
@@ -296,10 +287,15 @@ const styles = StyleSheet.create({
         flexDirection: "row",
         alignItems: "center",
         backgroundColor: colors.white,
-        borderRadius: 25,
-        paddingHorizontal: spacing.md,
-        paddingVertical: spacing.sm,
-        gap: spacing.sm,
+        borderRadius: 30,
+        paddingHorizontal: spacing.lg,
+        paddingVertical: 12,
+        gap: spacing.md,
+        shadowColor: "#000",
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+        elevation: 3,
     },
     searchInput: {
         flex: 1,
@@ -340,18 +336,19 @@ const styles = StyleSheet.create({
         marginBottom: spacing.lg,
     },
     categoryIcon: {
-        width: 50,
-        height: 50,
-        borderRadius: 25,
-        backgroundColor: colors.lightGray,
+        width: 56,
+        height: 56,
+        borderRadius: 12,
+        backgroundColor: "#F5F5F5",
         justifyContent: "center",
         alignItems: "center",
         marginBottom: spacing.xs,
     },
     categoryName: {
-        fontSize: 14,
+        fontSize: 15,
         color: colors.text,
         textAlign: "center",
+        fontWeight: "500",
     },
     bannerContainer: {
         marginTop: spacing.md,

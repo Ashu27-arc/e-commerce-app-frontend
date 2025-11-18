@@ -1,11 +1,38 @@
-import { View, Text, Image, TouchableOpacity, StyleSheet } from "react-native";
+import { View, Text, Image, TouchableOpacity, StyleSheet, ActivityIndicator } from "react-native";
 import { colors, spacing, borderRadius, shadows } from "../utils/theme";
 import { Ionicons } from "@expo/vector-icons";
+import { useState } from "react";
 
 export default function ProductCard({ item, onPress, onAddToCart, onAddToWishlist }: any) {
+  const [imageLoading, setImageLoading] = useState(true);
+  const [imageError, setImageError] = useState(false);
+
   return (
     <TouchableOpacity onPress={onPress} style={styles.card} activeOpacity={0.9}>
-      <Image source={{ uri: item.image }} style={styles.img} />
+      <View style={styles.imageContainer}>
+        {imageLoading && (
+          <View style={styles.loadingContainer}>
+            <ActivityIndicator size="small" color="#D97706" />
+          </View>
+        )}
+        {imageError ? (
+          <View style={styles.errorContainer}>
+            <Ionicons name="image-outline" size={48} color="#CCC" />
+          </View>
+        ) : (
+          <Image 
+            source={{ uri: item.image }} 
+            style={styles.img}
+            onLoadStart={() => setImageLoading(true)}
+            onLoadEnd={() => setImageLoading(false)}
+            onError={() => {
+              setImageError(true);
+              setImageLoading(false);
+            }}
+            resizeMode="cover"
+          />
+        )}
+      </View>
       <View style={styles.content}>
         <Text style={styles.title} numberOfLines={2}>{item.name}</Text>
         <View style={styles.priceRow}>
@@ -46,9 +73,31 @@ const styles = StyleSheet.create({
     flex: 1,
     marginHorizontal: spacing.xs,
   },
+  imageContainer: {
+    height: 150,
+    width: "100%",
+    backgroundColor: colors.lightGray,
+    position: "relative",
+  },
   img: {
     height: 150,
     width: "100%",
+  },
+  loadingContainer: {
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    bottom: 0,
+    justifyContent: "center",
+    alignItems: "center",
+    backgroundColor: colors.lightGray,
+  },
+  errorContainer: {
+    height: 150,
+    width: "100%",
+    justifyContent: "center",
+    alignItems: "center",
     backgroundColor: colors.lightGray,
   },
   content: {
