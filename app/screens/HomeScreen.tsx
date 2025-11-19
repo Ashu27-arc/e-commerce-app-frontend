@@ -6,6 +6,7 @@ import { router } from "expo-router";
 import { colors, spacing, borderRadius } from "../../utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { useCart } from "../../utils/cartContext";
+import { useWishlist } from "../../utils/wishlistContext";
 import ProductsInfo, { type FilterOptions } from "./ProductsInfo";
 import { api } from "../../utils/api";
 
@@ -54,6 +55,7 @@ export default function HomeScreen() {
     const [loading, setLoading] = useState(true);
     const scrollViewRef = useRef<ScrollView>(null);
     const { addToCart } = useCart();
+    const { addToWishlist } = useWishlist();
 
     useEffect(() => {
         fetchProducts();
@@ -128,8 +130,8 @@ export default function HomeScreen() {
     };
 
     const handleAddToWishlist = (product: Product) => {
-        // Implement wishlist functionality here
-        Alert.alert("Wishlist", `${product.name} added to wishlist!`);
+        addToWishlist(product);
+        Alert.alert("Success", `${product.name} added to wishlist!`);
     };
 
     return (
@@ -223,7 +225,7 @@ export default function HomeScreen() {
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Newly added products</Text>
-                        <TouchableOpacity>
+                        <TouchableOpacity onPress={() => router.push("/screens/ProductDetailsScreen")}>
                             <Text style={styles.viewAllText}>View all</Text>
                         </TouchableOpacity>
                     </View>
@@ -248,7 +250,10 @@ export default function HomeScreen() {
                                     <ProductCard
                                         item={item}
                                         onPress={() =>
-                                            router.push(`/screens/ProductDetailsScreen?id=${item._id}`)
+                                            router.push({
+                                                pathname: "/screens/ProductsDescription",
+                                                params: { productData: JSON.stringify(item) }
+                                            })
                                         }
                                         onAddToCart={handleAddToCart}
                                         onAddToWishlist={handleAddToWishlist}

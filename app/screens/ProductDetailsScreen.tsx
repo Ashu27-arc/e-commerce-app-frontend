@@ -6,7 +6,7 @@ import Header from "../../components/Header";
 import { api } from "../../utils/api";
 import { useCart } from "../../utils/cartContext";
 import { useWishlist } from "../../utils/wishlistContext";
-import { colors, spacing, borderRadius, shadows } from "../../utils/theme";
+import { colors, spacing, borderRadius } from "../../utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import ProductsInfo, { FilterOptions } from "./ProductsInfo";
 
@@ -40,7 +40,12 @@ export default function ProductDetailsScreen() {
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
   useEffect(() => {
-    api.getProducts().then(setProducts);
+    api.getProducts()
+      .then(setProducts)
+      .catch(error => {
+        console.error("Error fetching products:", error);
+        Alert.alert("Error", "Failed to load products. Please try again.");
+      });
   }, []);
 
   useEffect(() => {
@@ -143,7 +148,7 @@ export default function ProductDetailsScreen() {
           title="All Products"
           centerTitle={true}
           showBack={true}
-          onBackPress={() => router.push("/screens/HomeScreen")}
+          onBackPress={() => router.back()}
           showCart={false}
           showSearch={true}
           onSearchPress={() => setShowSearchBar(true)}
@@ -234,7 +239,10 @@ export default function ProductDetailsScreen() {
         contentContainerStyle={styles.productList}
         renderItem={({ item }) => (
           <View style={styles.productCard}>
-            <TouchableOpacity onPress={() => router.push(`/screens/ProductDetailsScreen?id=${item._id}`)}>
+            <TouchableOpacity onPress={() => router.push({
+              pathname: "/screens/ProductsDescription",
+              params: { productData: JSON.stringify(item) }
+            })}>
               <View style={styles.imageContainer}>
                 <Image
                   source={{ uri: item.image }}

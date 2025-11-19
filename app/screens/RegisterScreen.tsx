@@ -12,8 +12,28 @@ export default function RegisterScreen() {
   const [password, setPassword] = useState("");
 
   const registerUser = async () => {
-    await api.register({ name, email, password });
-    router.push("/screens/LoginScreen");
+    if (!name.trim() || !email.trim() || !password.trim()) {
+      alert("Please fill in all fields");
+      return;
+    }
+    
+    if (password.length < 6) {
+      alert("Password must be at least 6 characters");
+      return;
+    }
+    
+    try {
+      const res = await api.register({ name, email, password });
+      if (res.error) {
+        alert(res.error);
+      } else {
+        alert("Registration successful! Please login.");
+        router.replace("/screens/LoginScreen");
+      }
+    } catch (error) {
+      console.error("Registration error:", error);
+      alert("Registration failed. Please try again.");
+    }
   };
 
   return (

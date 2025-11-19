@@ -14,19 +14,24 @@ export default function CheckoutScreen() {
   const total = subtotal + deliveryFee;
 
   const checkout = async () => {
-    const orderItems = cart.map(item => ({
-      id: item._id,
-      qty: item.quantity,
-    }));
+    try {
+      const orderItems = cart.map(item => ({
+        id: item._id,
+        qty: item.quantity,
+      }));
 
-    await api.placeOrder({
-      userId: "123",
-      items: orderItems,
-      total: total,
-    });
+      await api.placeOrder({
+        userId: "123",
+        items: orderItems,
+        total: total,
+      });
 
-    clearCart();
-    router.push("/screens/OrdersScreen");
+      clearCart();
+      router.replace("/screens/OrdersScreen");
+    } catch (error) {
+      console.error("Checkout error:", error);
+      alert("Failed to place order. Please try again.");
+    }
   };
 
   return (
@@ -120,7 +125,7 @@ export default function CheckoutScreen() {
           
           <View style={styles.summaryRow}>
             <Text style={styles.summaryLabel}>Subtotal</Text>
-            <Text style={styles.summaryValue}>${subtotal.toFixed(2)}</Text>
+            <Text style={styles.summaryValue}>₹{subtotal.toFixed(2)}</Text>
           </View>
           
           <View style={styles.summaryRow}>
@@ -130,7 +135,7 @@ export default function CheckoutScreen() {
           
           <View style={styles.totalRow}>
             <Text style={styles.totalLabel}>Total</Text>
-            <Text style={styles.totalValue}>${total.toFixed(2)}</Text>
+            <Text style={styles.totalValue}>₹{total.toFixed(2)}</Text>
           </View>
         </View>
 

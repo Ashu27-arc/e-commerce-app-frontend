@@ -11,9 +11,22 @@ export default function LoginScreen() {
     const [password, setPassword] = useState("");
 
     const loginUser = async () => {
-        const res = await api.login({ email, password });
-        if (res.error) alert(res.error);
-        else router.push("/screens/HomeScreen");
+        if (!email.trim() || !password.trim()) {
+            alert("Please fill in all fields");
+            return;
+        }
+        
+        try {
+            const res = await api.login({ email, password });
+            if (res.error) {
+                alert(res.error);
+            } else {
+                router.replace("/screens/HomeScreen");
+            }
+        } catch (error) {
+            console.error("Login error:", error);
+            alert("Login failed. Please try again.");
+        }
     };
 
     return (

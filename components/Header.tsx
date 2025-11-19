@@ -1,5 +1,5 @@
 import { View, Text, StyleSheet, TouchableOpacity } from "react-native";
-import { colors, spacing, shadows } from "../utils/theme";
+import { colors, spacing } from "../utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCart } from "../utils/cartContext";

@@ -47,7 +47,7 @@ export default function CartItem({ item, onIncrement, onDecrement, onRemove }: C
             </TouchableOpacity>
           </View>
           
-          <Text style={styles.price}>${item.price * item.quantity}</Text>
+          <Text style={styles.price}>₹{item.price * item.quantity}</Text>
         </View>
       </View>
     </View>

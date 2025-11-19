@@ -32,7 +32,7 @@ export default function CartScreen() {
           title="Cart" 
           centerTitle={true}
           showBack={true}
-          onBackPress={() => router.push("/screens/ProductsDescription")}
+          onBackPress={() => router.back()}
           showCart={false}
         />
         <View style={styles.emptyContainer}>
@@ -54,7 +54,7 @@ export default function CartScreen() {
         title="Cart" 
         centerTitle={true}
         showBack={true}
-        onBackPress={() => router.push("/screens/ProductDetailsScreen")}
+        onBackPress={() => router.back()}
         showCart={false}
       />
       
@@ -83,7 +83,7 @@ export default function CartScreen() {
       <View style={styles.footer}>
         <View style={styles.totalRow}>
           <Text style={styles.totalLabel}>Subtotal</Text>
-          <Text style={styles.totalAmount}>${getCartTotal()}</Text>
+          <Text style={styles.totalAmount}>₹{getCartTotal()}</Text>
         </View>
         <Button
           title="Proceed to checkout"
