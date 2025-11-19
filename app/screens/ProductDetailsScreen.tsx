@@ -1,11 +1,12 @@
+
 import { router } from "expo-router";
 import { useEffect, useState } from "react";
-import { View, Text, Image, StyleSheet, Alert, TouchableOpacity, FlatList, Modal, ScrollView } from "react-native";
+import { View, Text, Image, StyleSheet, Alert, TouchableOpacity, FlatList, Modal, ScrollView, TextInput } from "react-native";
 import Header from "../../components/Header";
 import { api } from "../../utils/api";
 import { useCart } from "../../utils/cartContext";
 import { useWishlist } from "../../utils/wishlistContext";
-import { colors, spacing, borderRadius } from "../../utils/theme";
+import { colors, spacing, borderRadius, shadows } from "../../utils/theme";
 import { Ionicons } from "@expo/vector-icons";
 import ProductsInfo, { FilterOptions } from "./ProductsInfo";
 
@@ -33,6 +34,8 @@ export default function ProductDetailsScreen() {
   const [tempSort, setTempSort] = useState("relevance");
   const [filterModalVisible, setFilterModalVisible] = useState(false);
   const [appliedFilters, setAppliedFilters] = useState<FilterOptions | null>(null);
+  const [showSearchBar, setShowSearchBar] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
   const { addToCart } = useCart();
   const { addToWishlist, removeFromWishlist, isInWishlist } = useWishlist();
 
@@ -64,10 +67,19 @@ export default function ProductDetailsScreen() {
   const filteredProducts = selectedCategory === "all"
     ? products
     : products.filter(p => {
-        const productCategory = p.category?.toLowerCase().trim();
-        const selectedCat = selectedCategory.toLowerCase().trim();
-        return productCategory === selectedCat || productCategory?.includes(selectedCat);
-      });
+      const productCategory = p.category?.toLowerCase().trim();
+      const selectedCat = selectedCategory.toLowerCase().trim();
+      return productCategory === selectedCat || productCategory?.includes(selectedCat);
+    });
+
+  // Apply search filter
+  const searchFilteredProducts = searchQuery.trim() === ""
+    ? filteredProducts
+    : filteredProducts.filter(p => 
+        p.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        p.category?.toLowerCase().includes(searchQuery.toLowerCase())
+      );
 
   // Apply additional filters from ProductsInfo
   const filterByAdvancedFilters = (products: any[]) => {
@@ -84,26 +96,26 @@ export default function ProductDetailsScreen() {
           return false;
         }
       }
-      
+
       // Color filter (if product has color property)
       if (appliedFilters.color && product.color) {
         if (product.color.toLowerCase() !== appliedFilters.color.toLowerCase()) {
           return false;
         }
       }
-      
+
       // Rating filter (if product has rating property)
       if (appliedFilters.rating && product.rating) {
         if (product.rating < appliedFilters.rating) {
           return false;
         }
       }
-      
+
       return true;
     });
   };
 
-  const advancedFilteredProducts = filterByAdvancedFilters(filteredProducts);
+  const advancedFilteredProducts = filterByAdvancedFilters(searchFilteredProducts);
   const sortedProducts = sortProducts(advancedFilteredProducts);
 
   const handleAddToCart = (product: any) => {
@@ -126,7 +138,45 @@ export default function ProductDetailsScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="All Products" />
+      {!showSearchBar ? (
+        <Header
+          title="All Products"
+          centerTitle={true}
+          showBack={true}
+          onBackPress={() => router.push("/screens/HomeScreen")}
+          showCart={false}
+          showSearch={true}
+          onSearchPress={() => setShowSearchBar(true)}
+        />
+      ) : (
+        <View style={styles.searchHeader}>
+          <TouchableOpacity
+            onPress={() => {
+              setShowSearchBar(false);
+              setSearchQuery("");
+            }}
+            style={styles.searchBackButton}
+          >
+            <Ionicons name="arrow-back" size={24} color={colors.text} />
+          </TouchableOpacity>
+          <TextInput
+            style={styles.searchInput}
+            placeholder="Search products..."
+            value={searchQuery}
+            onChangeText={setSearchQuery}
+            autoFocus
+            placeholderTextColor={colors.gray}
+          />
+          {searchQuery.length > 0 && (
+            <TouchableOpacity
+              onPress={() => setSearchQuery("")}
+              style={styles.clearButton}
+            >
+              <Ionicons name="close-circle" size={24} color={colors.gray} />
+            </TouchableOpacity>
+          )}
+        </View>
+      )}
 
       {/* Category Filter Pills */}
       <View style={styles.categoryContainer}>
@@ -161,7 +211,7 @@ export default function ProductDetailsScreen() {
 
       {/* Filter and Sort Bar */}
       <View style={styles.filterBar}>
-        <TouchableOpacity 
+        <TouchableOpacity
           style={styles.filterButton}
           onPress={() => setFilterModalVisible(true)}
         >
@@ -190,14 +240,14 @@ export default function ProductDetailsScreen() {
                   source={{ uri: item.image }}
                   style={styles.productImage}
                 />
-                <TouchableOpacity 
+                <TouchableOpacity
                   style={styles.wishlistButton}
                   onPress={() => handleToggleWishlist(item)}
                 >
-                  <Ionicons 
-                    name={isInWishlist(item._id) ? "heart" : "heart-outline"} 
-                    size={18} 
-                    color={isInWishlist(item._id) ? "#FF6B6B" : "#666"} 
+                  <Ionicons
+                    name={isInWishlist(item._id) ? "heart" : "heart-outline"}
+                    size={18}
+                    color={isInWishlist(item._id) ? "#FF6B6B" : "#666"}
                   />
                 </TouchableOpacity>
               </View>
@@ -543,5 +593,28 @@ const styles = StyleSheet.create({
     height: 10,
     borderRadius: 5,
     backgroundColor: "#F99245",
+  },
+  searchHeader: {
+    backgroundColor: "#FFF5EB",
+    paddingVertical: spacing.lg,
+    paddingHorizontal: spacing.md,
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  searchBackButton: {
+    padding: spacing.xs,
+  },
+  searchInput: {
+    flex: 1,
+    fontSize: 16,
+    color: colors.text,
+    paddingVertical: spacing.sm,
+    paddingHorizontal: spacing.md,
+    backgroundColor: colors.white,
+    borderRadius: borderRadius.md,
+  },
+  clearButton: {
+    padding: spacing.xs,
   },
 });

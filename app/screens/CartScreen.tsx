@@ -1,5 +1,5 @@
 import { router } from "expo-router";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity } from "react-native";
+import { View, Text, StyleSheet, SectionList } from "react-native";
 import Button from "../../components/Button";
 import CartItem from "../../components/CartItem";
 import Header from "../../components/Header";
@@ -7,12 +7,34 @@ import { useCart } from "../../utils/cartContext";
 import { colors, spacing, borderRadius } from "../../utils/theme";
 
 export default function CartScreen() {
-  const { cart, removeFromCart, getCartTotal } = useCart();
+  const cartContext = useCart();
+  const { cart, removeFromCart, updateQuantity, getCartTotal } = cartContext;
+
+  // Group cart items by category (Electronics and Accessories)
+  const groupedCart = cart.reduce((acc: any, item: any) => {
+    const category = item.category || "Other";
+    if (!acc[category]) {
+      acc[category] = [];
+    }
+    acc[category].push(item);
+    return acc;
+  }, {});
+
+  const sections = Object.keys(groupedCart).map((category) => ({
+    title: category,
+    data: groupedCart[category],
+  }));
 
   if (cart.length === 0) {
     return (
       <View style={styles.container}>
-        <Header title="Cart" />
+        <Header 
+          title="Cart" 
+          centerTitle={true}
+          showBack={true}
+          onBackPress={() => router.push("/screens/ProductsDescription")}
+          showCart={false}
+        />
         <View style={styles.emptyContainer}>
           <Text style={styles.emptyIcon}>🛒</Text>
           <Text style={styles.emptyTitle}>Your cart is empty</Text>
@@ -28,32 +50,43 @@ export default function CartScreen() {
 
   return (
     <View style={styles.container}>
-      <Header title="Cart" />
+      <Header 
+        title="Cart" 
+        centerTitle={true}
+        showBack={true}
+        onBackPress={() => router.push("/screens/ProductDetailsScreen")}
+        showCart={false}
+      />
       
-      <FlatList
-        data={cart}
+      <SectionList
+        sections={sections}
         keyExtractor={(item) => item._id}
         contentContainerStyle={styles.listContent}
-        renderItem={({ item }) => (
-          <View>
-            <CartItem item={item} />
-            <TouchableOpacity
-              style={styles.removeBtn}
-              onPress={() => removeFromCart(item._id)}
-            >
-              <Text style={styles.removeTxt}>Remove</Text>
-            </TouchableOpacity>
+        renderSectionHeader={({ section: { title } }) => (
+          <View style={styles.categoryHeader}>
+            <Text style={styles.categoryTitle}>
+              {title === "Electronics" ? "📱 Electronics" : "🎧 Accessories"}
+            </Text>
+            <View style={styles.categoryLine} />
           </View>
+        )}
+        renderItem={({ item }) => (
+          <CartItem 
+            item={item}
+            onIncrement={() => updateQuantity(item._id, item.quantity + 1)}
+            onDecrement={() => updateQuantity(item._id, item.quantity - 1)}
+            onRemove={() => removeFromCart(item._id)}
+          />
         )}
       />
 
       <View style={styles.footer}>
         <View style={styles.totalRow}>
-          <Text style={styles.totalLabel}>Total:</Text>
-          <Text style={styles.totalAmount}>₹{getCartTotal()}</Text>
+          <Text style={styles.totalLabel}>Subtotal</Text>
+          <Text style={styles.totalAmount}>${getCartTotal()}</Text>
         </View>
         <Button
-          title="Proceed to Checkout"
+          title="Proceed to checkout"
           onPress={() => router.push("/screens/CheckoutScreen")}
         />
       </View>
@@ -68,6 +101,25 @@ const styles = StyleSheet.create({
   },
   listContent: {
     padding: spacing.md,
+    paddingBottom: spacing.xl,
+  },
+  categoryHeader: {
+    backgroundColor: colors.background,
+    paddingVertical: spacing.md,
+    marginTop: spacing.md,
+    marginBottom: spacing.sm,
+  },
+  categoryTitle: {
+    fontSize: 20,
+    fontWeight: "bold",
+    color: colors.text,
+    marginBottom: spacing.xs,
+  },
+  categoryLine: {
+    height: 3,
+    backgroundColor: colors.primary,
+    width: 60,
+    borderRadius: 2,
   },
   emptyContainer: {
     flex: 1,
@@ -91,17 +143,6 @@ const styles = StyleSheet.create({
     marginBottom: spacing.xl,
     textAlign: "center",
   },
-  removeBtn: {
-    alignSelf: "flex-end",
-    marginTop: -spacing.sm,
-    marginRight: spacing.md,
-    marginBottom: spacing.md,
-  },
-  removeTxt: {
-    color: colors.error,
-    fontSize: 14,
-    fontWeight: "600",
-  },
   footer: {
     backgroundColor: colors.white,
     padding: spacing.lg,
@@ -117,11 +158,11 @@ const styles = StyleSheet.create({
   totalLabel: {
     fontSize: 20,
     fontWeight: "600",
-    color: colors.text,
+    color: "#000",
   },
   totalAmount: {
     fontSize: 24,
     fontWeight: "bold",
-    color: colors.secondary,
+    color: "#000",
   },
 });

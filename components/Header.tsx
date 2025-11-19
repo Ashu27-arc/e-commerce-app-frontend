@@ -4,13 +4,21 @@ import { Ionicons } from "@expo/vector-icons";
 import { router } from "expo-router";
 import { useCart } from "../utils/cartContext";
 
-export default function Header({ title, showSearch, onSearchPress }: any) {
+export default function Header({ title, showSearch, onSearchPress, showBack, onBackPress, centerTitle, showCart = true }: any) {
   const { cart } = useCart();
   const itemCount = cart.reduce((total, item) => total + item.quantity, 0);
 
   return (
     <View style={styles.header}>
-      <Text style={styles.txt}>{title}</Text>
+      {showBack && (
+        <TouchableOpacity 
+          style={styles.backButton}
+          onPress={onBackPress}
+        >
+          <Ionicons name="arrow-back" size={28} color={colors.text} />
+        </TouchableOpacity>
+      )}
+      <Text style={[styles.txt, centerTitle && styles.txtCenter]}>{title}</Text>
       <View style={styles.iconContainer}>
         {showSearch && (
           <TouchableOpacity 
@@ -20,17 +28,19 @@ export default function Header({ title, showSearch, onSearchPress }: any) {
             <Ionicons name="search-outline" size={28} color={colors.text} />
           </TouchableOpacity>
         )}
-        <TouchableOpacity 
-          style={styles.cartIcon}
-          onPress={() => router.push("/screens/CartScreen")}
-        >
-          <Ionicons name="cart-outline" size={28} color={colors.text} />
-          {itemCount > 0 && (
-            <View style={styles.badge}>
-              <Text style={styles.badgeText}>{itemCount}</Text>
-            </View>
-          )}
-        </TouchableOpacity>
+        {showCart && (
+          <TouchableOpacity 
+            style={styles.cartIcon}
+            onPress={() => router.push("/screens/CartScreen")}
+          >
+            <Ionicons name="cart-outline" size={28} color={colors.text} />
+            {itemCount > 0 && (
+              <View style={styles.badge}>
+                <Text style={styles.badgeText}>{itemCount}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+        )}
       </View>
     </View>
   );
@@ -45,10 +55,18 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     alignItems: "center",
   },
+  backButton: {
+    padding: spacing.xs,
+    marginRight: spacing.sm,
+  },
   txt: {
     color: colors.text,
     fontSize: 24,
     fontWeight: "bold",
+  },
+  txtCenter: {
+    flex: 1,
+    textAlign: "center",
   },
   iconContainer: {
     flexDirection: "row",

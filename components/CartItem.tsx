@@ -1,42 +1,79 @@
-import { View, Text, Image, StyleSheet } from "react-native";
+import { View, Text, Image, StyleSheet, TouchableOpacity } from "react-native";
 import { colors, spacing, borderRadius, shadows } from "../utils/theme";
 
-export default function CartItem({ item }: any) {
+interface CartItemProps {
+  item: any;
+  onIncrement?: () => void;
+  onDecrement?: () => void;
+  onRemove?: () => void;
+}
+
+export default function CartItem({ item, onIncrement, onDecrement, onRemove }: CartItemProps) {
   return (
-    <View style={styles.row}>
+    <View style={styles.card}>
       <Image source={{ uri: item.image }} style={styles.img} />
-      <View style={styles.info}>
+      
+      <View style={styles.content}>
         <Text style={styles.name} numberOfLines={2}>{item.name}</Text>
-        <Text style={styles.price}>₹{item.price}</Text>
-        <Text style={styles.quantity}>Quantity: {item.quantity}</Text>
-      </View>
-      <View style={styles.totalContainer}>
-        <Text style={styles.totalLabel}>Total</Text>
-        <Text style={styles.totalPrice}>₹{item.price * item.quantity}</Text>
+        
+        <View style={styles.detailsRow}>
+          <Text style={styles.detailText}>Size: {item.size || "2"}</Text>
+          <Text style={styles.detailText}>Color: {item.color || "Green"}</Text>
+        </View>
+
+        <View style={styles.bottomRow}>
+          <View style={styles.leftSection}>
+            <Text style={styles.qtyLabel}>Qty:</Text>
+            <View style={styles.quantityControls}>
+              <Text style={styles.quantityText}>{item.quantity}</Text>
+              <View style={styles.arrowButtons}>
+                <TouchableOpacity 
+                  style={styles.arrowBtn} 
+                  onPress={onIncrement}
+                >
+                  <Text style={styles.arrowText}>▲</Text>
+                </TouchableOpacity>
+                <TouchableOpacity 
+                  style={styles.arrowBtn} 
+                  onPress={onDecrement}
+                  disabled={item.quantity <= 1}
+                >
+                  <Text style={styles.arrowText}>▼</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+            <TouchableOpacity style={styles.deleteBtn} onPress={onRemove}>
+              <Text style={styles.deleteText}>🗑️</Text>
+            </TouchableOpacity>
+          </View>
+          
+          <Text style={styles.price}>${item.price * item.quantity}</Text>
+        </View>
       </View>
     </View>
   );
 }
 
 const styles = StyleSheet.create({
-  row: {
-    flexDirection: "row",
-    padding: spacing.md,
+  card: {
     backgroundColor: colors.white,
     borderRadius: borderRadius.md,
-    marginBottom: spacing.sm,
+    marginBottom: spacing.md,
+    flexDirection: "row",
+    padding: spacing.md,
     ...shadows.small,
   },
   img: {
-    width: 80,
-    height: 80,
-    borderRadius: borderRadius.sm,
+    width: 100,
+    height: 100,
     backgroundColor: colors.lightGray,
+    resizeMode: "contain",
+    borderRadius: borderRadius.sm,
   },
-  info: {
-    marginLeft: spacing.md,
+  content: {
     flex: 1,
-    justifyContent: "center",
+    marginLeft: spacing.md,
+    justifyContent: "space-between",
   },
   name: {
     fontSize: 16,
@@ -44,28 +81,67 @@ const styles = StyleSheet.create({
     color: colors.text,
     marginBottom: spacing.xs,
   },
-  price: {
-    fontSize: 14,
-    color: colors.gray,
-    marginBottom: spacing.xs,
+  detailsRow: {
+    flexDirection: "row",
+    gap: spacing.md,
+    marginBottom: spacing.sm,
   },
-  quantity: {
+  detailText: {
     fontSize: 14,
     color: colors.textLight,
   },
-  totalContainer: {
+  bottomRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
+  leftSection: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: spacing.sm,
+  },
+  qtyLabel: {
+    fontSize: 14,
+    color: colors.text,
+    fontWeight: "500",
+  },
+  quantityControls: {
+    flexDirection: "row",
+    alignItems: "center",
+    backgroundColor: colors.lightGray,
+    borderRadius: borderRadius.sm,
+    paddingHorizontal: spacing.xs,
+    paddingVertical: 4,
+  },
+  quantityText: {
+    fontSize: 16,
+    fontWeight: "600",
+    color: colors.text,
+    minWidth: 30,
+    textAlign: "center",
+  },
+  arrowButtons: {
+    marginLeft: spacing.xs,
+  },
+  arrowBtn: {
+    width: 20,
+    height: 15,
     justifyContent: "center",
-    alignItems: "flex-end",
-    marginLeft: spacing.sm,
+    alignItems: "center",
   },
-  totalLabel: {
-    fontSize: 12,
-    color: colors.textLight,
-    marginBottom: spacing.xs,
+  arrowText: {
+    fontSize: 10,
+    color: colors.text,
   },
-  totalPrice: {
+  deleteBtn: {
+    padding: spacing.xs,
+  },
+  deleteText: {
     fontSize: 18,
+  },
+  price: {
+    fontSize: 20,
     fontWeight: "bold",
-    color: colors.secondary,
+    color: "#FF8C42",
   },
 });

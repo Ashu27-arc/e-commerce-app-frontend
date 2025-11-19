@@ -134,7 +134,9 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.container}>
-            <Header title="Tech Store" />
+            <Header 
+                title="Tech Store" 
+            />
 
             <ScrollView showsVerticalScrollIndicator={false}>
                 {/* Search Bar */}
